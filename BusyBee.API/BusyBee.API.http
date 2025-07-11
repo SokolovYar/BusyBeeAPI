@@ -1,0 +1,6 @@
+@BusyBeeBack_HostAddress = http://localhost:5025
+
+GET {{BusyBeeBack_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
