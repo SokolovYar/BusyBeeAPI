@@ -29,10 +29,14 @@ jobs:
       - name: Publish
         run: dotnet publish BusyBee.API/BusyBee.API.csproj --configuration Release --output ./publish
 
+      # Проверяем, что файлы опубликовались
+      - name: Check publish directory
+        run: ls -la ./publish
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
+          name: dotnet-app  # Изменил имя артефакта для ясности
           path: ./publish
 
   deploy:
@@ -46,9 +50,10 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: dotnet-app  # Должно совпадать с именем при загрузке
 
-      - name: List files in current directory
+      # Проверяем скачанные файлы
+      - name: List downloaded files
         run: ls -la
 
       # Добавьте этот шаг для аутентификации в Azure
@@ -60,9 +65,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_10AE413EEAF44B68A525735E5933800D }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0EB79B9536384BA5A21FDE78E0F647D6 }}
 
+      # Деплой
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'busybeeapi'
           slot-name: 'Production'
-          package: .net-app
+          package: dotnet-app  # Теперь используем новое имя артефакта
