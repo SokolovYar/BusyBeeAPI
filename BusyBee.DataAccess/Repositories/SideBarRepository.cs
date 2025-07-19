@@ -26,7 +26,7 @@ namespace BusyBee.DataAccess.Repositories
 
         public async Task<int> GetSpecialistCurrentAsync() 
         {
-            var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(Specialist.TIME_TO_ONLINE);
+            var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-Specialist.TIME_TO_ONLINE);
             return await _context.Specialists
                          .CountAsync(s => s.LastActivityTime >= fiveMinutesAgo);
         }

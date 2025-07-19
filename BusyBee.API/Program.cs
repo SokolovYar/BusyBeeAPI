@@ -60,7 +60,7 @@ namespace BusyBeeBack
             {
                 var services = scope.ServiceProvider;
                 var context = services.GetRequiredService<BusyBeeDBContext>();
-                context.Database.EnsureCreated();
+                //context.Database.EnsureCreated();
                 //context.Database.EnsureDeleted();
                 DBInitializer.Initialize(context);
             }
