@@ -27,13 +27,13 @@ jobs:
         run: dotnet build BusyBee.API/BusyBee.API.csproj --configuration Release
 
       - name: Publish
-        run: dotnet publish BusyBee.API/BusyBee.API.csproj --configuration Release --output ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish BusyBee.API/BusyBee.API.csproj --configuration Release --output ./publish
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: ./publish
 
   deploy:
     runs-on: ubuntu-latest
@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'busybeeapi'
           slot-name: 'Production'
-          package: ${{ env.DOTNET_ROOT }}/myapp
+          package: ./publish
