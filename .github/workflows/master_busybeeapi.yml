@@ -56,4 +56,4 @@ jobs:
         with:
           app-name: 'busybeeapi'
           slot-name: 'Production'
-          package: ./.net-app
+          package: .net-app
