@@ -1,3 +1,5 @@
+using BusyBee.API.DTOs;
+using BusyBee.API.DTOs.API;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,15 +23,24 @@ namespace BusyBeeBack.Controllers
 
         [Authorize]
         [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
+        public ActionResult<ApiResponse<IEnumerable<WeatherForecast>>> Get()
         {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            return Ok(new ApiResponse<IEnumerable<WeatherForecast>>
             {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+                Status = new StatusInfo
+                {
+                    Code = 200,
+                    Message = "Success",
+                    IsSuccess = true
+                },
+                Meta = new MetaInfo(HttpContext),
+                Data = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+                {
+                    Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                    TemperatureC = Random.Shared.Next(-20, 55),
+                    Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                }).ToArray()
+            });
         }
     }
 }

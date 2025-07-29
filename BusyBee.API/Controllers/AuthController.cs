@@ -36,8 +36,5 @@ namespace BusyBee.API.Controllers
             return Ok(new { message = "User registered successfully" });
         }
     }
-
-
-
 }
 
