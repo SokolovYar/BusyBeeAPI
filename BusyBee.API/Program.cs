@@ -3,7 +3,9 @@ using BusyBee.API.Services;
 using BusyBee.DataAccess;
 using BusyBee.DataAccess.Repositories;
 using BusyBee.Domain.Interfaces;
+using BusyBee.Domain.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -37,7 +39,22 @@ namespace BusyBeeBack
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine("Authentication failed: " + context.Exception.Message);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("Token is valid");
+                return Task.CompletedTask;
+            }
+        };
     });
+            
+            
             builder.Services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "BusyBee API", Version = "v1" });
@@ -83,6 +100,15 @@ namespace BusyBeeBack
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddIdentity<User, IdentityRole>(options =>
+            {
+                options.User.AllowedUserNameCharacters =
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789àáâãäå¸æçèéêëìíîïğñòóôõö÷øùüûúışÿÀÁÂÃÄÅ¨ÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÜÛÚİŞß-._@+";
+            })
+            .AddEntityFrameworkStores<BusyBeeDBContext>()
+            .AddDefaultTokenProviders();
+
+
             builder.Services.AddDbContext<BusyBeeDBContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -94,6 +120,7 @@ namespace BusyBeeBack
 
             var app = builder.Build();
 
+            app.UseRouting();
             app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();

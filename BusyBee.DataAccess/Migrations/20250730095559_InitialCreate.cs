@@ -13,6 +13,21 @@ namespace BusyBee.DataAccess.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Cities",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Region = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Cities", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -206,24 +221,27 @@ namespace BusyBee.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Cities",
+                name: "OfferCities",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Region = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    OfferId = table.Column<int>(type: "integer", nullable: true)
+                    CitiesId = table.Column<int>(type: "integer", nullable: false),
+                    OffersId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Cities", x => x.Id);
+                    table.PrimaryKey("PK_OfferCities", x => new { x.CitiesId, x.OffersId });
                     table.ForeignKey(
-                        name: "FK_Cities_Offers_OfferId",
-                        column: x => x.OfferId,
+                        name: "FK_OfferCities_Cities_CitiesId",
+                        column: x => x.CitiesId,
+                        principalTable: "Cities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OfferCities_Offers_OffersId",
+                        column: x => x.OffersId,
                         principalTable: "Offers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -260,11 +278,6 @@ namespace BusyBee.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Cities_OfferId",
-                table: "Cities",
-                column: "OfferId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Customers_UserId",
                 table: "Customers",
                 column: "UserId");
@@ -278,6 +291,11 @@ namespace BusyBee.DataAccess.Migrations
                 name: "IX_Feedbacks_WorkId",
                 table: "Feedbacks",
                 column: "WorkId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OfferCities_OffersId",
+                table: "OfferCities",
+                column: "OffersId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Offers_SpecialistId",
@@ -329,13 +347,16 @@ namespace BusyBee.DataAccess.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Cities");
-
-            migrationBuilder.DropTable(
                 name: "Feedbacks");
 
             migrationBuilder.DropTable(
+                name: "OfferCities");
+
+            migrationBuilder.DropTable(
                 name: "Payments");
+
+            migrationBuilder.DropTable(
+                name: "Cities");
 
             migrationBuilder.DropTable(
                 name: "Offers");

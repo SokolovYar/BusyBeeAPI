@@ -22,9 +22,10 @@ namespace BusyBeeBack.Controllers
         }
 
         [Authorize]
-        [HttpGet(Name = "GetWeatherForecast")]
+        [HttpGet]
         public ActionResult<ApiResponse<IEnumerable<WeatherForecast>>> Get()
         {
+            _logger.LogInformation("WeatherForecastController Get method called");
             return Ok(new ApiResponse<IEnumerable<WeatherForecast>>
             {
                 Status = new StatusInfo

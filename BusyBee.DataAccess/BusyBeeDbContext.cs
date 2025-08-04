@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using BusyBee.Domain.Models;
+﻿using BusyBee.Domain.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace BusyBee.DataAccess
 {
-    public class BusyBeeDBContext : DbContext
+    public class BusyBeeDBContext : IdentityDbContext<User>
     {
         public BusyBeeDBContext(DbContextOptions<BusyBeeDBContext> options) : base(options)
         {
@@ -19,5 +20,15 @@ namespace BusyBee.DataAccess
         public DbSet<User> Users { get; set; }
         public DbSet<Work> Works { get; set; }
         public DbSet<WorkCategory> WorkCategories { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Offer>()
+                .HasMany(o => o.Cities)
+                .WithMany(c => c.Offers)
+                .UsingEntity(j => j.ToTable("OfferCities"));
+        }
+
     }
 }

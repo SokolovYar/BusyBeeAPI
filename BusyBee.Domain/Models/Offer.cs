@@ -7,9 +7,9 @@
         public string? Description { get; set; }
         public DateTime PlannedDuration { get; set; }
 
-        // Navigation properties
         public required Work Work { get; set; }
         public required Specialist Specialist { get; set; }
-        public List<City> Cities { get; set; } = new List<City>();
+
+        public List<City> Cities { get; set; } = new();
     }
 }

@@ -2,6 +2,7 @@
 using BusyBee.API.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using BusyBee.API.DTOs.API;
 
 namespace BusyBee.API.Controllers
 {
@@ -25,6 +26,7 @@ namespace BusyBee.API.Controllers
 
             return Ok(new { token });
         }
+
 
         [HttpPost("signup")]
         public async Task<IActionResult> Signup([FromBody] RegisterUserRequest request)

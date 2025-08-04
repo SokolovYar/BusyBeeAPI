@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BusyBee.DataAccess.Migrations
 {
     [DbContext(typeof(BusyBeeDBContext))]
-    [Migration("20250709145346_InitialCreate")]
+    [Migration("20250730095559_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -41,16 +41,11 @@ namespace BusyBee.DataAccess.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int?>("OfferId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Region")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OfferId");
 
                     b.ToTable("Cities");
                 });
@@ -348,11 +343,19 @@ namespace BusyBee.DataAccess.Migrations
                     b.ToTable("WorkCategories");
                 });
 
-            modelBuilder.Entity("BusyBee.Domain.Models.City", b =>
+            modelBuilder.Entity("CityOffer", b =>
                 {
-                    b.HasOne("BusyBee.Domain.Models.Offer", null)
-                        .WithMany("Cities")
-                        .HasForeignKey("OfferId");
+                    b.Property<int>("CitiesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OffersId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CitiesId", "OffersId");
+
+                    b.HasIndex("OffersId");
+
+                    b.ToTable("OfferCities", (string)null);
                 });
 
             modelBuilder.Entity("BusyBee.Domain.Models.Customer", b =>
@@ -468,9 +471,19 @@ namespace BusyBee.DataAccess.Migrations
                     b.Navigation("WorkCategory");
                 });
 
-            modelBuilder.Entity("BusyBee.Domain.Models.Offer", b =>
+            modelBuilder.Entity("CityOffer", b =>
                 {
-                    b.Navigation("Cities");
+                    b.HasOne("BusyBee.Domain.Models.City", null)
+                        .WithMany()
+                        .HasForeignKey("CitiesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BusyBee.Domain.Models.Offer", null)
+                        .WithMany()
+                        .HasForeignKey("OffersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

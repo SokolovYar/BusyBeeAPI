@@ -12,63 +12,70 @@ namespace BusyBee.API.Services
 {
     public class AuthService
     {
-        private readonly IUserRepository _userRepository;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _configuration;
-        private readonly PasswordHasher<User> _passwordHasher = new();
 
-        public AuthService(IUserRepository userRepository, IConfiguration configuration)
+        public AuthService(
+            UserManager<User> userManager,
+            SignInManager<User> signInManager,
+            IConfiguration configuration)
         {
-            _userRepository = userRepository;
+            _userManager = userManager;
+            _signInManager = signInManager;
             _configuration = configuration;
         }
 
         public async Task<string?> AuthenticateAsync(LoginUserRequest request)
         {
-            var user = await _userRepository.GetRequiredUserAsync(request.Email);
-            if (user == null) return null;
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+                return null;
 
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.Password);
-            if (result == PasswordVerificationResult.Failed) return null;
+            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+            if (!result.Succeeded)
+                return null;
 
-            return GenerateJwtToken(user);
+            return await GenerateJwtToken(user);
         }
 
         public async Task<RegisterResult> RegisterAsync(RegisterUserRequest request)
         {
-            var existingUser = await _userRepository.GetRequiredUserAsync(request.Email);
-            if (existingUser != null)
-                return RegisterResult.Fail("User with this email already exists");
-
             var user = new User
             {
-                Id = Guid.NewGuid().ToString(),
                 UserName = request.UserName,
-                FullName = request.FullName,
                 Email = request.Email,
+                FullName = request.FullName,
                 PhoneNumber = request.PhoneNumber,
                 LockoutEnabled = !request.RememberMe
             };
 
-            user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-            await _userRepository.AddUserAsync(user);
+            var result = await _userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.Select(e => e.Description).ToArray();
+                return RegisterResult.Fail(string.Join("; ", errors));
+            }
+
+            await _userManager.AddToRoleAsync(user, "customer");
             return RegisterResult.Ok();
         }
 
-        private string GenerateJwtToken(User user)
+        private async Task<string> GenerateJwtToken(User user)
         {
-            
-            var lockoutEnd = DateTime.UtcNow.AddHours(4).ToString("o");
-            if (user.LockoutEnabled!) lockoutEnd = DateTime.UtcNow.AddHours(72).ToString("o");
-   
+            var roles = await _userManager.GetRolesAsync(user);
 
-            var claims = new[]
-            {
+            var claims = new List<Claim>
+        {
             new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(ClaimTypes.Email, user.Email ?? ""),
             new Claim(ClaimTypes.Name, user.FullName ?? ""),
-            new Claim(ClaimTypes.Role, "customer"),     // Временно добавляем роль "customer"
-            new Claim(ClaimTypes.Expiration, lockoutEnd)
-            };
+        };
+
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -77,10 +84,12 @@ namespace BusyBee.API.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: creds);
+                expires: DateTime.UtcNow.AddHours(20),
+                signingCredentials: creds
+            );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
+
 }

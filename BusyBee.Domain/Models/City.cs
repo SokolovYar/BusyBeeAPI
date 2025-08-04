@@ -14,10 +14,9 @@ namespace BusyBee.Domain.Models
         [Required]
         [MaxLength(100)]
         public string Name { get; set; }
-
         [MaxLength(100)]
         public string? Region { get; set; }
-
         public bool IsActive { get; set; } = true;
+        public List<Offer> Offers { get; set; } = new(); 
     }
 }
