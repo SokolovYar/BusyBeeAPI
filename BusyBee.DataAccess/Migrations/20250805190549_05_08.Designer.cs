@@ -3,6 +3,7 @@ using System;
 using BusyBee.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BusyBee.DataAccess.Migrations
 {
     [DbContext(typeof(BusyBeeDBContext))]
-    partial class BusyBeeDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250805190549_05_08")]
+    partial class _05_08
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

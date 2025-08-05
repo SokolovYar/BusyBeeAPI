@@ -57,7 +57,10 @@ namespace BusyBee.API.Services
                 return RegisterResult.Fail(string.Join("; ", errors));
             }
 
-            await _userManager.AddToRoleAsync(user, "customer");
+            //await _userManager.AddToRoleAsync(user, "customer");
+            //await _userManager.AddToRoleAsync(user, "specialist");
+            await _userManager.AddToRoleAsync(user, "admin");
+
             return RegisterResult.Ok();
         }
 
@@ -84,7 +87,7 @@ namespace BusyBee.API.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(24),
+                expires: DateTime.UtcNow.AddHours(2400),
                 signingCredentials: creds
             );
 
