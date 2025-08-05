@@ -74,7 +74,6 @@ namespace BusyBeeBack
             {
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "BusyBee API", Version = "v1" });
 
-                // Äîáàâëÿåì ïîääåðæêó àâòîðèçàöèè ÷åðåç JWT
                 var jwtSecurityScheme = new OpenApiSecurityScheme
                 {
                     BearerFormat = "JWT",
@@ -82,7 +81,7 @@ namespace BusyBeeBack
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
                     Scheme = "bearer",
-                    Description = "Ââåäèòå JWT òîêåí â ôîðìàòå: Bearer {òîêåí}",
+                    Description = "Авторизация: Bearer {token}",
 
                     Reference = new OpenApiReference
                     {
@@ -125,7 +124,7 @@ namespace BusyBeeBack
 
 
             builder.Services.AddDbContext<BusyBeeDBContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("LocalConnection")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<AuthService>();
