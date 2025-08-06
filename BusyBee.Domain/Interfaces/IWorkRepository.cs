@@ -4,7 +4,6 @@ namespace BusyBee.DataAccess.Repositories
 {
     public interface IWorkRepository
     {
-        Task AddWork(Work work);
         Task AddWork(Work work, int categoryId);
         Task DeleteWork(int id);
         Task<IEnumerable<Work>> GetAllWorks();

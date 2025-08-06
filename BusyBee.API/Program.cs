@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace BusyBeeBack
 {
@@ -44,7 +45,7 @@ namespace BusyBeeBack
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-                    RoleClaimType = ClaimTypes.Role // Явное указание типа claim для ролей
+                    RoleClaimType = ClaimTypes.Role 
                 };
                 options.Events = new JwtBearerEvents
                 {
@@ -113,7 +114,13 @@ namespace BusyBeeBack
                 });
             });
 
-            builder.Services.AddControllers();
+
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -136,6 +143,7 @@ namespace BusyBeeBack
             builder.Services.AddScoped<ISideBarRepository, SideBarRepository>();
             builder.Services.AddScoped<ISideBarService, SideBarService>();
             builder.Services.AddScoped<WorkCategoryRepository>();
+            builder.Services.AddScoped<IWorkRepository, WorkRepository>();
 
             var app = builder.Build();
 

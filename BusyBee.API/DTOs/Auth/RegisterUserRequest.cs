@@ -1,4 +1,6 @@
-﻿namespace BusyBee.API.DTOs.Auth
+﻿using BusyBee.Domain.Enums;
+
+namespace BusyBee.API.DTOs.Auth
 {
     public record RegisterUserRequest
     {
@@ -8,5 +10,6 @@
         public required string PhoneNumber { get; init; }
         public required string Password { get; init; }
         public bool RememberMe { get; init; } = true;
+        public UserRole UserRole { get; init; } 
     }
 }

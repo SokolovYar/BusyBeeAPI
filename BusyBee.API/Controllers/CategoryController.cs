@@ -18,7 +18,7 @@ namespace BusyBee.API.Controllers
             _categoryRepository = categoryRepository ?? throw new ArgumentNullException(nameof(categoryRepository));
         }
 
-        [HttpGet]
+        [HttpGet("all")]
         public async Task<IActionResult> GetAllCategories()
         {
             try

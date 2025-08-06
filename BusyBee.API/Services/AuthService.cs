@@ -1,9 +1,11 @@
-﻿using BusyBee.Domain.Models;
+﻿using BusyBee.API.DTOs.Auth;
 using BusyBee.Domain.Interfaces;
+using BusyBee.Domain.Models;
+using BusyBee.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
-using BusyBee.API.DTOs.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -41,6 +43,12 @@ namespace BusyBee.API.Services
 
         public async Task<RegisterResult> RegisterAsync(RegisterUserRequest request)
         {
+
+            if (request.UserRole == UserRole.admin)
+            {
+                return RegisterResult.Fail("Only an admin can register a new admin.");
+            }
+
             var user = new User
             {
                 UserName = request.UserName,
@@ -57,12 +65,11 @@ namespace BusyBee.API.Services
                 return RegisterResult.Fail(string.Join("; ", errors));
             }
 
-            //await _userManager.AddToRoleAsync(user, "customer");
-            //await _userManager.AddToRoleAsync(user, "specialist");
-            await _userManager.AddToRoleAsync(user, "admin");
-
+            await _userManager.AddToRoleAsync(user, request.UserRole.ToString());
             return RegisterResult.Ok();
         }
+
+
 
         private async Task<string> GenerateJwtToken(User user)
         {

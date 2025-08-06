@@ -27,12 +27,6 @@ namespace BusyBee.DataAccess.Repositories
             return await _context.Works.FindAsync(id);
         }
 
-        public async Task AddWork(Work work)
-        {
-            if (work == null) throw new ArgumentNullException(nameof(work));
-            _context.Works.Add(work);
-            await _context.SaveChangesAsync();
-        }
         public async Task UpdateWork(Work work)
         {
             if (work == null) throw new ArgumentNullException(nameof(work));

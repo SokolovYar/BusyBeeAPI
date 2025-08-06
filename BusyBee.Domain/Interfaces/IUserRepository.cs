@@ -10,5 +10,7 @@ namespace BusyBee.Domain.Interfaces
         Task<User> GetUserByIdAsync(string userId);
         Task<User?> GetRequiredUserAsync(string email);
         Task UpdateUserAsync(User user);
+        Task<List<User>> GetAllUsersAsync();
+        Task ChangeUserRoleAsync(string userId, string newUserRole);
     }
 }
