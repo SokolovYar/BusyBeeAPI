@@ -135,7 +135,7 @@ namespace BusyBeeBack
 
             // Настройка базы данных
             builder.Services.AddDbContext<BusyBeeDBContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("LocalConnection")));
 
             // Регистрация сервисов
             builder.Services.AddScoped<IUserRepository, UserRepository>();

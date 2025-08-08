@@ -130,7 +130,7 @@ namespace BusyBee.API.Controllers
         }
         */
 
-        [Authorize (Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpPut]
         public async Task<IActionResult> UpdateUserAsync([FromBody] User user)
         {
@@ -166,7 +166,7 @@ namespace BusyBee.API.Controllers
         }
 
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpDelete("delete/{userId}")]
         public async Task<IActionResult> DeleteUserAsync(string userId)
         {
@@ -237,7 +237,7 @@ namespace BusyBee.API.Controllers
 
 
         //404 ошибка. потом разобраться!
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpPost("change-role/{userId}")]
         public async Task<IActionResult> ChangeUserRoleAsync(string userId, [FromQuery] string newUserRole)
         {
