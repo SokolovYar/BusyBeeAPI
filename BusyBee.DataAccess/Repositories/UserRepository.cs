@@ -109,5 +109,20 @@ namespace BusyBee.DataAccess.Repositories
         {
             return await _context.Users.ToListAsync();
         }
+
+        public async Task<List<UserRole>> GetUserRolesAsync(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+            }
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new KeyNotFoundException($"User with ID {userId} not found.");
+            }
+            var roles = await _userManager.GetRolesAsync(user);
+            return roles.Select(role => Enum.Parse<UserRole>(role, true)).ToList();
+        }
     }
 }

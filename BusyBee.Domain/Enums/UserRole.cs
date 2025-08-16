@@ -8,8 +8,8 @@ namespace BusyBee.Domain.Enums
 {
     public enum UserRole
     {
-        user,
-        admin,
-        specialist
+        customer,
+        specialist,
+        admin
     }
 }
