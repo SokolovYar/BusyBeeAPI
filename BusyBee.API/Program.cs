@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -21,18 +20,31 @@ namespace BusyBeeBack
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Configuration
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-                    .AddEnvironmentVariables();
 
-            // Настройка аутентификации
+            builder.Configuration
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+                .AddEnvironmentVariables();
+
+            // Настройка базы данных
+            builder.Services.AddDbContext<BusyBeeDBContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // Настройка Identity
+            builder.Services.AddIdentity<User, IdentityRole>(options =>
+            {
+                options.User.AllowedUserNameCharacters =
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789абвгдеёжзийклмнопрстуфхцчшщьыъэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯІіЄє'-._@+";
+            })
+            .AddEntityFrameworkStores<BusyBeeDBContext>()
+            .AddDefaultTokenProviders();
+
+            // Настройка аутентификации (JWT + Google)
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             })
             .AddJwtBearer(options =>
             {
@@ -45,7 +57,7 @@ namespace BusyBeeBack
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-                    RoleClaimType = ClaimTypes.Role 
+                    RoleClaimType = ClaimTypes.Role
                 };
                 options.Events = new JwtBearerEvents
                 {
@@ -60,24 +72,55 @@ namespace BusyBeeBack
                         return Task.CompletedTask;
                     }
                 };
+            })
+            .AddGoogle(options =>
+            {
+                options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+                options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+                options.CallbackPath = "/signin-google";
             });
 
             // Настройка авторизации
             builder.Services.AddAuthorization(options =>
             {
-                // Базовая политика для аутентифицированных пользователей
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                     .Build();
 
-                // Политика для администраторов
                 options.AddPolicy("AdminPolicy", policy =>
                     policy.RequireRole("admin")
                           .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme));
             });
 
-            // Настройка Swagger
+            // Регистрация сервисов
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<ISideBarRepository, SideBarRepository>();
+            builder.Services.AddScoped<ISideBarService, SideBarService>();
+            builder.Services.AddScoped<WorkCategoryRepository>();
+            builder.Services.AddScoped<IWorkRepository, WorkRepository>();
+
+            // CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
+            // Контроллеры
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
+
+            // Swagger
+            builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "BusyBee API", Version = "v1" });
@@ -104,50 +147,9 @@ namespace BusyBeeBack
                 });
             });
 
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAll", policy =>
-                {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-                });
-            });
-
-
-            builder.Services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                });
-
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            // Настройка Identity
-            builder.Services.AddIdentity<User, IdentityRole>(options =>
-            {
-                options.User.AllowedUserNameCharacters =
-                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789абвгдеёжзийклмнопрстуфхцчшщьыъэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯІіЄє'-._@+";
-            })
-            .AddEntityFrameworkStores<BusyBeeDBContext>()
-            .AddDefaultTokenProviders();
-
-            // Настройка базы данных
-            builder.Services.AddDbContext<BusyBeeDBContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-            // Регистрация сервисов
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<AuthService>();
-            builder.Services.AddScoped<ISideBarRepository, SideBarRepository>();
-            builder.Services.AddScoped<ISideBarService, SideBarService>();
-            builder.Services.AddScoped<WorkCategoryRepository>();
-            builder.Services.AddScoped<IWorkRepository, WorkRepository>();
-
             var app = builder.Build();
 
-            // Конфигурация middleware
+            // Middleware
             app.UseRouting();
             app.UseCors("AllowAll");
             app.UseAuthentication();
@@ -161,10 +163,7 @@ namespace BusyBeeBack
             {
                 var services = scope.ServiceProvider;
                 var context = services.GetRequiredService<BusyBeeDBContext>();
-                // Инициализация базы данных при необходимости
-                // context.Database.EnsureCreated();
-                // context.Database.EnsureDeleted();
-                // DBInitializer.Initialize(context);
+                // DBInitializer.Initialize(context); // при необходимости
             }
 
             app.Run();

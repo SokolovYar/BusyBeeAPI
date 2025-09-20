@@ -1,13 +1,18 @@
-﻿using BusyBee.API.DTOs.API;
+﻿using BusyBee.API.DTOs;
+using BusyBee.API.DTOs.API;
 using BusyBee.API.DTOs.Auth;
 using BusyBee.API.Services;
 using BusyBee.Domain.Interfaces;
 using BusyBee.Domain.Models;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using BusyBee.API.DTOs;
+using System.Text;
 
 namespace BusyBee.API.Controllers
 {
@@ -17,13 +22,24 @@ namespace BusyBee.API.Controllers
     {
         private readonly AuthService _authService;
         private readonly IUserRepository _userRepository;
+        private readonly UserManager<User> _userManager;
+        private readonly IConfiguration _configuration;
+        private readonly SignInManager<User> _signInManager;
 
-        public AuthController(AuthService authService, IUserRepository userRepository)
+
+        public AuthController(
+            AuthService authService,
+            IUserRepository userRepository,
+            UserManager<User> userManager,
+            IConfiguration configuration,
+            SignInManager<User> signInManager)
         {
             _authService = authService;
             _userRepository = userRepository;
+            _userManager = userManager;
+            _configuration = configuration;
+            _signInManager = signInManager;
         }
-
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserRequest request)
@@ -44,23 +60,6 @@ namespace BusyBee.API.Controllers
                 Data = token
             });
         }
-
-        [HttpGet("test")]
-        public IActionResult Test()
-        {
-            return Ok(new ApiResponse<string>
-            {
-                Status = new StatusInfo
-                {
-                    Code = StatusCodes.Status200OK,
-                    Message = "AuthController is working!",
-                    IsSuccess = true
-                },
-                Meta = new MetaInfo(HttpContext),
-                Data = "AuthController is working!"
-            });
-        }
-
 
         [HttpPost("signup")]
         public async Task<IActionResult> Signup([FromBody] RegisterUserRequest request)
@@ -88,30 +87,11 @@ namespace BusyBee.API.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
-                return Unauthorized(new ApiResponse<string>
-                { 
-                    Status = new StatusInfo
-                    {
-                        Code = StatusCodes.Status401Unauthorized,
-                        Message = "User not authenticated",
-                        IsSuccess = false
-                    },
-                    Meta = new MetaInfo(HttpContext),
-                    Data = null
-                });
+                return Unauthorized();
+
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
-                return NotFound(new ApiResponse<string>
-                {
-                    Status = new StatusInfo
-                    {
-                        Code = StatusCodes.Status404NotFound,
-                        Message = "User not found",
-                        IsSuccess = false
-                    },
-                    Meta = new MetaInfo(HttpContext),
-                    Data = null
-                });
+                return NotFound();
 
             return Ok(new ApiResponse<UserDTO>
             {
@@ -132,7 +112,42 @@ namespace BusyBee.API.Controllers
                 }
             });
         }
-  
+
+        // === Новый блок для входа через Google ===
+
+        [HttpGet("external-login")]
+        public IActionResult ExternalLogin([FromQuery] string provider, [FromQuery] string returnUrl)
+        {
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Auth", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider);
+        }
+
+        [HttpGet("external-login-callback")]
+        public async Task<IActionResult> ExternalLoginCallback(string returnUrl = "/")
+        {
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+                return Redirect("/login?error=ExternalLoginFailed");
+
+            // ищем пользователя
+            var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (user == null)
+            {
+                // если нет — создаём
+                user = new User
+                {
+                    UserName = info.Principal.FindFirstValue(ClaimTypes.Email),
+                    Email = info.Principal.FindFirstValue(ClaimTypes.Email),
+                    FullName = info.Principal.FindFirstValue(ClaimTypes.Name)
+                };
+
+                await _userManager.CreateAsync(user);
+                await _userManager.AddLoginAsync(user, info);
+            }
+
+            var token = await _authService.GenerateJwtToken(user); ;
+            return Redirect($"{returnUrl}?token={token}");
+        }
     }
 }
-

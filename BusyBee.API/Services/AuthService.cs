@@ -71,7 +71,7 @@ namespace BusyBee.API.Services
 
 
 
-        private async Task<string> GenerateJwtToken(User user)
+        public async Task<string> GenerateJwtToken(User user)
         {
             var roles = await _userManager.GetRolesAsync(user);
 
