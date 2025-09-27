@@ -14,6 +14,6 @@ namespace BusyBee.Domain.Interfaces
         Task<List<User>> GetAllUsersAsync();
         Task ChangeUserRoleAsync(string userId, string newUserRole);
         Task<List<UserRole>> GetUserRolesAsync(string userId);
-
+        Task UpdateAvatarAsync(string userId, string avatarURL);
     }
 }

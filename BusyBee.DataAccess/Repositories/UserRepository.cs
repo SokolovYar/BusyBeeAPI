@@ -42,6 +42,15 @@ namespace BusyBee.DataAccess.Repositories
             return await _context.Users.FindAsync(userId);
         }
 
+        public async Task UpdateAvatarAsync(string userId, string avatarURL)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return;
+
+            user.AvatarUrl = avatarURL;
+            await _context.SaveChangesAsync();
+        }
+
         public async Task AddUserAsync(User user)
         {
             if (user == null)

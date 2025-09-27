@@ -3,7 +3,7 @@ using BusyBee.Domain.Models;
 
 namespace BusyBee.API.DTOs
 {
-    public class UserDTO
+    public record UserDTO
     {
         public string Id { get; set; }
         public string UserName { get; set; } = null!;

@@ -27,7 +27,7 @@ namespace BusyBeeBack
                 .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
 
-            // Настройка базы данных
+            // Настройка базы данных!
             builder.Services.AddDbContext<BusyBeeDBContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -158,6 +158,7 @@ namespace BusyBeeBack
             app.UseSwagger();
             app.UseSwaggerUI();
             app.MapControllers();
+            app.UseStaticFiles();
 
             using (var scope = app.Services.CreateScope())
             {

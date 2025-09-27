@@ -1,6 +1,6 @@
 ﻿namespace BusyBee.API.DTOs.Auth
 {
-    public class RegisterResult
+    public record RegisterResult
     {
         public bool Success { get; set; }
         public string? ErrorMessage { get; set; }

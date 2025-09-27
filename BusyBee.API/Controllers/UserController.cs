@@ -1,9 +1,11 @@
-﻿using BusyBee.Domain.Interfaces;
-using BusyBee.Domain.Models;
+﻿using BusyBee.API.DTOs;
 using BusyBee.API.DTOs.API;
+using BusyBee.Domain.Interfaces;
+using BusyBee.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace BusyBee.API.Controllers
 {
@@ -52,6 +54,37 @@ namespace BusyBee.API.Controllers
                     Data = null
                 });
             }
+        }
+
+        [Authorize]
+        [HttpPost("upload-avatar")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadAvatar([FromForm] UploadAvatarRequest request)
+        {
+            var file = request.File;
+            if (file == null || file.Length == 0)
+                return BadRequest("Файл не загружен.");
+
+            var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
+            if (!Directory.Exists(uploads))
+                Directory.CreateDirectory(uploads);
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var filePath = Path.Combine(uploads, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Unauthorized();
+
+            var relativePath = $"/avatars/{fileName}";
+            await _userRepository.UpdateAvatarAsync(userId, relativePath);
+
+            return Ok(new { FilePath = relativePath });
         }
 
 
